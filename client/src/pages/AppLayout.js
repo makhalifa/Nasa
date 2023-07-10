@@ -21,6 +21,8 @@ import Footer from "../components/Footer";
 import Launch from "./Launch";
 import History from "./History";
 import Upcoming from "./Upcoming";
+import Login_Register from "./Login";
+import Login from "./Login";
 
 const styles = () => ({
   content: {
@@ -92,6 +94,9 @@ const AppLayout = props => {
             </Route>
             <Route exact path="/history">
               <History entered={anim.entered} launches={launches} />
+            </Route>
+            <Route exact path="/login">
+              <Login entered={anim.entered} />
             </Route>
           </Switch>
           </div>

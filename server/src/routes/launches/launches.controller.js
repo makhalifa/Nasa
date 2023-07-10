@@ -1,42 +1,69 @@
-const { getAllLaunches,addNewLaunch, existsLaunchWithId, abortLaunchById } = require("../../models/launches.model");
+const {
+  getAllLaunches, 
+  ScheduleNewLaunch,
+  existsLaunchWithId,
+  abortLaunchById,
+} = require('../../models/launches.model');
 
-function httpGetAllLaunches(req, res) {
-  return res.status(200).json(getAllLaunches());
+const {getPagination} = require('../../services/query');
+
+async function httpGetAllLaunches(req, res) {
+  const {skip,limit} = getPagination(req.query);
+  return res.status(200).json(await getAllLaunches(skip,limit));
 }
 
-function httpAddNewLaunch(req, res) {
+async function httpAddNewLaunch(req, res) {
   const launch = req.body;
 
-  if(!launch.mission || !launch.rocket || !launch.launchDate || !launch.target){
+  if (
+    !launch.mission ||
+    !launch.rocket ||
+    !launch.launchDate ||
+    !launch.target
+  ) {
     return res.status(400).json({
-      '💬': 'Missing required launch property'
+      '💬': 'Missing required launch property',
     });
   }
 
   // make the launchDate Date object
   launch.launchDate = new Date(launch.launchDate);
-  if (isNaN(launch.launchDate)){
+  if (isNaN(launch.launchDate)) {
     return res.status(400).json({
-      '💬': 'Invalid launch date'
+      '💬': 'Invalid launch date',
     });
   }
-  addNewLaunch(launch);
-  return res.status(201).json(launch);
+  try {
+    await ScheduleNewLaunch(launch);
+    return res.status(201).json(launch);
+  } catch (err) {
+    return res.status(400).json({
+      '💬': 'Error: Launch already exists',
+    });
+  }
 }
 
-function httpAbortLaunch(req, res) {
+async function httpAbortLaunch(req, res) {
   const launchId = Number(req.params.id);
 
   // if launchId is not exist
-  if(!existsLaunchWithId(launchId)){
+  const existsLaunch = await existsLaunchWithId(launchId);
+  if (!existsLaunch) {
     return res.status(404).json({
-      '💬': 'Launch not found'
+      '💬': 'Launch not found',
     });
   }
 
-  const aborted = abortLaunchById(launchId);
+  const aborted = await abortLaunchById(launchId);
+  if (!aborted) {
+    return res.status(400).json({
+      '💬': 'Launch not aborted',
+    });
+  }
 
-  return res.status(200).json(aborted);
+  return res.status(200).json({
+    '💬': 'Launch aborted',
+  });
 }
 
 module.exports = {
