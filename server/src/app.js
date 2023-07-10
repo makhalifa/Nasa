@@ -32,6 +32,19 @@ function verify(accessToken, refreshToken, profile, cb) {
 
 passport.use(new Strategy(AUTH_OPTIONS, verify));
 
+// Save user to session
+passport.serializeUser((user, done) => {
+  console.log('serializeUser', user);
+  done(null, user.id);
+});
+
+// Get user from session
+passport.deserializeUser((id, done) => {
+  // User.findById(id, (err, user) => {
+  //   done(err, user);
+  done(null, id);
+});
+
 const app = express();
 
 app.use(
@@ -39,13 +52,11 @@ app.use(
     origin: 'http://localhost:3000',
   })
 );
-
-app.use(helmet());
-
-app.use(morgan('dev'));
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(morgan('dev'));
+
+app.use(helmet());
 
 app.use(
   cookieSession({
@@ -56,6 +67,7 @@ app.use(
 );
 
 app.use(passport.initialize());
+app.use(passport.session());
 
 app.get(
   '/auth/google',
@@ -66,15 +78,39 @@ app.get(
   '/auth/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/failure',
-    session: false,
+    session: true,
   }),
   (_req, res) => {
     res.redirect('/');
   }
 );
 
+app.get('/auth/logout', (req, res) => {
+  // Remove the user id from the session
+  req.logout();
+
+  // Remove the session cookie
+  req.session = null;
+
+  res.redirect('/');
+});
+
+function isLoggedIn(req, res, next) {
+  console.log('req.user', req.user);
+  if (req.isAuthenticated() && req.user) {
+    next();
+  } else {
+    // res.redirect('/auth/google');
+    res.status(401).send('Unauthorized ⚠️⚠️⚠️');
+  }
+}
+
 app.get('/failure', (_req, res) => {
   res.send('Failed to authenticate..');
+});
+
+app.get('/secrets', isLoggedIn, (req, res) => {
+  res.send('Secret ㊙㊙㊙㊙');
 });
 
 app.use('/v1', v1Router);
