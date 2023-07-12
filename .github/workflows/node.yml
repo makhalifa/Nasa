@@ -13,10 +13,11 @@ jobs:
       GOOGLE_CLIENT_SECRET: 1049770
       COOKIE_KEY_1: 1049770
       COOKIE_KEY_2:  1049770
+      MONGO_URI: mongodb://localhost/nasa
     strategy: # This is the strategy matrix
       matrix: # This is the matrix of different versions
         node-version: [14.x, 16.x] # This is the list of node versions
-        mongodb-version: ['4.4', '5.0', '6.0']
+        mongodb-version: ['4.4']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
