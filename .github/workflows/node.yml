@@ -9,16 +9,27 @@ jobs:
     # env makes sure that the CI environment is set to true
     env:
       CI: true
+        GOOGLE_CLIENT_ID: 1049770
+        GOOGLE_CLIENT_SECRET: 1049770
+        COOKIE_KEY_1: 1049770
+        COOKIE_KEY_2:  1049770
     strategy: # This is the strategy matrix
       matrix: # This is the matrix of different versions
         node-version: [14.x, 16.x] # This is the list of node versions
+        mongodb-version: ['4.4', '5.0', '6.0']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Use Node.js version ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: '${{ matrix.node-version }}'
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.8.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
       - run: npm install
       - run: npm run build --prefix client
       - run: npm test
